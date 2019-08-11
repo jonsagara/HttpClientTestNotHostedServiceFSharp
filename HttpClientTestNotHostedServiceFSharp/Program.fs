@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Linq
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
@@ -63,13 +64,11 @@ let main argv =
     try
         let testSvc = services.GetRequiredService<TestService>()
         let html = testSvc.AsyncGetMicrosoft() |> Async.RunSynchronously
-        printfn "%s" html
+        printfn "%s" (String(html.Take(1000).ToArray()))
     with
         | ex -> 
             let logger = services.GetRequiredService<ILogger<Program>>()
             Console.Error.WriteLine(sprintf "Unhandled exception %s" (ex.ToString()))
             logger.LogError(ex, "Unhandled exception");
 
-
-    printfn "Hello World from F#!"
     0 // return an integer exit code
