@@ -8,6 +8,9 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open TestService
 
+// Seems like a kludge, but we need a type to pass to the ILogger instance below.
+type Program() = class end
+
 [<EntryPoint>]
 let main argv =
 
@@ -63,8 +66,7 @@ let main argv =
         printfn "%s" html
     with
         | ex -> 
-            // This is not TestService, what type do we use here inside Program?
-            let logger = services.GetRequiredService<ILogger<TestService>>()
+            let logger = services.GetRequiredService<ILogger<Program>>()
             Console.Error.WriteLine(sprintf "Unhandled exception %s" (ex.ToString()))
             logger.LogError(ex, "Unhandled exception");
 
