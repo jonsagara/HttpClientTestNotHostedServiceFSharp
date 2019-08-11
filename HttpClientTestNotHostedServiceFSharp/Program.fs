@@ -62,7 +62,11 @@ let main argv =
         let html = testSvc.AsyncGetMicrosoft() |> Async.RunSynchronously
         printfn "%s" html
     with
-        | ex -> Console.Error.WriteLine(sprintf "Unhandled exception %s" (ex.ToString()))
+        | ex -> 
+            // This is not TestService, what type do we use here inside Program?
+            let logger = services.GetRequiredService<ILogger<TestService>>()
+            Console.Error.WriteLine(sprintf "Unhandled exception %s" (ex.ToString()))
+            logger.LogError(ex, "Unhandled exception");
 
 
     printfn "Hello World from F#!"
