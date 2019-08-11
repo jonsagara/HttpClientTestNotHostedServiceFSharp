@@ -22,6 +22,7 @@ let main argv =
         configHost
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("hostsettings.json", optional = true)
+            // Analogous to ASPNETCORE_WHATEVER, except it's PREFIX_WHATEVER
             .AddEnvironmentVariables(prefix = "PREFIX_")
             .AddCommandLine(argv)
             |> ignore
@@ -31,12 +32,14 @@ let main argv =
         configApp
             .AddJsonFile("appsettings.json", optional = true)
             .AddJsonFile(sprintf "appsettings.%s.json" context.HostingEnvironment.EnvironmentName, optional = true)
+            // Analogous to ASPNETCORE_WHATEVER, except it's PREFIX_WHATEVER
             .AddEnvironmentVariables(prefix = "PREFIX_")
             .AddCommandLine(argv)
             |> ignore
 
     // Services configuration
     let serviceConfig (context : HostBuilderContext) (services : IServiceCollection) =
+        printfn "Environment: %s" context.HostingEnvironment.EnvironmentName
         services
             .AddHttpClient()
             .AddTransient<TestService, TestService>()
