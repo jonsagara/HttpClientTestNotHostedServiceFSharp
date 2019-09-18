@@ -1,4 +1,4 @@
-# Use `HttpClient` via `IHttpClientFactory` in a .NET Core 2.2 console app without implementing `IHostedService` #
+# Use `HttpClient` via `IHttpClientFactory` in a .NET Core console app without implementing `IHostedService` #
 
 > If you're looking for the C# version, go [here](https://github.com/jonsagara/HttpClientTestNotHostedService).
 
