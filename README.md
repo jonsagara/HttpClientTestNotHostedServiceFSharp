@@ -37,8 +37,8 @@ module TestService
 
         let _httpClient = httpClientFactory.CreateClient()
 
-        member this.AsyncGetMicrosoft() =
-            async {
+        member this.GetMicrosoftAsync() =
+            task {
                 use requestMsg = new HttpRequestMessage(HttpMethod.Get, "https://www.microsoft.com")
                 use! responseMsg = _httpClient.SendAsync(requestMsg)
                 return! responseMsg.Content.ReadAsStringAsync()
