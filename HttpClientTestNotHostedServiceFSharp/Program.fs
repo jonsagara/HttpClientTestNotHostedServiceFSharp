@@ -66,7 +66,7 @@ let main argv =
 
     try
         let testSvc = services.GetRequiredService<TestService>()
-        let html = testSvc.AsyncGetMicrosoft() |> Async.RunSynchronously
+        let html = testSvc.GetMicrosoftAsync() |> Async.AwaitTask |> Async.RunSynchronously
         printfn "%s" (String(html.Take(1_000).ToArray()))
     with
         | ex -> 
