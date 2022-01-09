@@ -14,7 +14,7 @@ let services = serviceScope.ServiceProvider
 
 try
     let testSvc = services.GetRequiredService<TestService>()
-    let html = testSvc.AsyncGetMicrosoft() |> Async.RunSynchronously
+    let html = testSvc.GetMicrosoftAsync() |> Async.AwaitTask |> Async.RunSynchronously
     printfn "%s" (String(html.Take(1_000).ToArray()))
 with
     | ex -> 
@@ -40,9 +40,8 @@ module TestService
         member this.AsyncGetMicrosoft() =
             async {
                 use requestMsg = new HttpRequestMessage(HttpMethod.Get, "https://www.microsoft.com")
-                use! responseMsg = _httpClient.SendAsync(requestMsg) |> Async.AwaitTask
-                let! content = responseMsg.Content.ReadAsStringAsync() |> Async.AwaitTask
-                return content
+                use! responseMsg = _httpClient.SendAsync(requestMsg)
+                return! responseMsg.Content.ReadAsStringAsync()
             }
 ```
 
