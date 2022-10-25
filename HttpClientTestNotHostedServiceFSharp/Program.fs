@@ -1,77 +1,45 @@
-﻿module Main
+﻿namespace HttpClientTestNotHostedServiceFSharp
 
-open System
-open System.IO
-open System.Linq
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
-open TestService
+open Serilog
 
-// Seems like a kludge, but we need a type to pass to the ILogger instance below.
-type Program() = class end
+module Program =
 
-[<EntryPoint>]
-let main argv =
+    [<EntryPoint>]
+    let main argv =
 
-    // See: https://github.com/magnushammar/GenericHost.FSharp
+        // The initial "bootstrap" logger is able to log errors during start-up. It's completely replaced by the
+        //   logger configured in `UseSerilog()` in HostBuilderHelper, once configuration and dependency-injection
+        //   have both been set up successfully.
+        Log.Logger <- LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateBootstrapLogger();
 
-    // Host configuration
-    let hostConfig (configHost : IConfigurationBuilder) =
-        configHost
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("hostsettings.json", optional = true)
-            // Analogous to ASPNETCORE_WHATEVER, except it's PREFIX_WHATEVER
-            .AddEnvironmentVariables(prefix = "PREFIX_")
-            .AddCommandLine(argv)
-            |> ignore
+        try
+            try
+                //
+                // Set up the generic host and DI.
+                //
 
-    // App configuration
-    let appConfig (context : HostBuilderContext) (configApp : IConfigurationBuilder) =
-        configApp
-            .AddJsonFile("appsettings.json", optional = true)
-            .AddJsonFile(sprintf "appsettings.%s.json" context.HostingEnvironment.EnvironmentName, optional = true)
-            // Analogous to ASPNETCORE_WHATEVER, except it's PREFIX_WHATEVER
-            .AddEnvironmentVariables(prefix = "PREFIX_")
-            .AddCommandLine(argv)
-            |> ignore
+                let host = HostBuilderHelper.buildHost argv
+                use serviceScope = host.Services.CreateScope()
+                let services = serviceScope.ServiceProvider
 
-    // Services configuration
-    let serviceConfig (context : HostBuilderContext) (services : IServiceCollection) =
-        printfn "Environment: %s" context.HostingEnvironment.EnvironmentName
-        services
-            .AddHttpClient()
-            .AddTransient<TestService, TestService>()
-            |> ignore
 
-    // Logging configuration
-    let loggingConfig (context : HostBuilderContext) (configLogging : ILoggingBuilder) =
-        configLogging
-            .AddConsole()
-            .AddDebug()
-            |> ignore
+                //
+                // Run the test service method.
+                //
 
-    let host = 
-        HostBuilder()
-            .ConfigureHostConfiguration(Action<IConfigurationBuilder> hostConfig)
-            .ConfigureAppConfiguration(Action<HostBuilderContext, IConfigurationBuilder> appConfig)
-            .ConfigureServices(Action<HostBuilderContext, IServiceCollection> serviceConfig)
-            .ConfigureLogging(Action<HostBuilderContext, ILoggingBuilder> loggingConfig)
-            .Build()
+                let testSvc = services.GetRequiredService<TestService>()
+                let html = testSvc.GetMicrosoftAsync() |> Async.AwaitTask |> Async.RunSynchronously
 
-    
-    use serviceScope = host.Services.CreateScope()
-    let services = serviceScope.ServiceProvider
+                let substringLength = if html.Length > 1_000 then 1_000 else html.Length
+                printfn $"{html.Substring(0, substringLength)}"
 
-    try
-        let testSvc = services.GetRequiredService<TestService>()
-        let html = testSvc.GetMicrosoftAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        printfn "%s" (String(html.Take(1_000).ToArray()))
-    with
-        | ex -> 
-            let logger = services.GetRequiredService<ILogger<Program>>()
-            Console.Error.WriteLine(sprintf "Unhandled exception %s" (ex.ToString()))
-            logger.LogError(ex, "Unhandled exception");
-
-    0 // return an integer exit code
+                0
+            with
+            | ex -> 
+                Log.Error(ex, "Unhandled exception in main")
+                1
+        finally
+            Log.CloseAndFlush()
