@@ -5,22 +5,26 @@
 Not that there's anything wrong with `IHostedService`, but sometimes you just want a plain old console app without having to implement another interface just so 
 that you can inject and use `IHttpClientFactory`.
 
-There is still some ceremony involved with setting up the Generic Host `HostBuilder` so that you can inject `IHttpClientFactory` into your classes,
-but beyond that you merely create an `IServiceScope` to make everything work:
+There is still some ceremony involved with setting up the Generic Host `HostBuilder` so that you can inject `IHttpClientFactory` into your classes, but beyond that you merely create an `IServiceScope` to make everything work:
 
 ```fsharp
+//
+// Set up the generic host and DI.
+//
+
+let host = HostBuilderHelper.buildHost argv
 use serviceScope = host.Services.CreateScope()
 let services = serviceScope.ServiceProvider
 
-try
-    let testSvc = services.GetRequiredService<TestService>()
-    let html = testSvc.GetMicrosoftAsync() |> Async.AwaitTask |> Async.RunSynchronously
-    printfn "%s" (String(html.Take(1_000).ToArray()))
-with
-    | ex -> 
-        let logger = services.GetRequiredService<ILogger<Program>>()
-        Console.Error.WriteLine(sprintf "Unhandled exception %s" (ex.ToString()))
-        logger.LogError(ex, "Unhandled exception");
+//
+// Run the test service method.
+//
+
+let testSvc = services.GetRequiredService<TestService>()
+let html = testSvc.GetMicrosoftAsync() |> Async.AwaitTask |> Async.RunSynchronously
+
+let substringLength = if html.Length > 1_000 then 1_000 else html.Length
+printfn $"{html.Substring(0, substringLength)}"
 ```
 
 This code creates an `IServiceScope` in `main`, and then uses that to get our registered `TestService` class, which returns the HTML of https://www.microsoft.com
@@ -29,20 +33,21 @@ as a string. We then display the first 1,000 characters.
 The `TestService` class looks like this:
 
 ```fsharp
-module TestService
+type TestService (httpClientFactory : IHttpClientFactory) =
 
-    open System.Net.Http
+    static let _logger = Log.Logger.ForContext<TestService>()
 
-    type TestService (httpClientFactory : IHttpClientFactory) =
+    let _httpClient = httpClientFactory.CreateClient()
 
-        let _httpClient = httpClientFactory.CreateClient()
+    member this.GetMicrosoftAsync() =
+        task {
+            _logger.Information("Making HTTP request...")
+            use requestMsg = new HttpRequestMessage(HttpMethod.Get, "https://www.microsoft.com")
+            use! responseMsg = _httpClient.SendAsync(requestMsg)
 
-        member this.GetMicrosoftAsync() =
-            task {
-                use requestMsg = new HttpRequestMessage(HttpMethod.Get, "https://www.microsoft.com")
-                use! responseMsg = _httpClient.SendAsync(requestMsg)
-                return! responseMsg.Content.ReadAsStringAsync()
-            }
+            _logger.Information("Done.")
+            return! responseMsg.Content.ReadAsStringAsync()
+        }
 ```
 
 And now you can use all of the [newfangled `IHttpClientFactory` goodness](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-2.2) 
