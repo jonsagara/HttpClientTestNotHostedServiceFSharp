@@ -49,7 +49,7 @@ module HostBuilderHelper =
             //.AddDebug()
             |> ignore
 
-    // Configure Serilog for logging.
+    /// Configure Serilog for logging.
     let private configureSerilog (context : HostBuilderContext) (services : IServiceProvider) (loggerConfig : LoggerConfiguration) =
 
         // This is the .exe path in bin/{configuration}/{tfm}/
