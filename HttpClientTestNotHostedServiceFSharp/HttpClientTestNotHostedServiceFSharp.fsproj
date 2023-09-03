@@ -7,8 +7,7 @@
 		<Content Include="**\*.json" Exclude="bin\**\*;obj\**\*" CopyToOutputDirectory="PreserveNewest" />
 		<Content Include="hostsettings.json" />
 		<Compile Include="TestService.fs" />
-		<Compile Include="Logging.fs" />
-		<Compile Include="HostBuilderHelper.fs" />
+		<Compile Include="ConsoleHost.fs" />
 		<Compile Include="Program.fs" />
 	</ItemGroup>
 	<ItemGroup>
@@ -22,12 +21,12 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+		<PackageReference Include="Sagara.Core" Version="1.0.0" />
+		<PackageReference Include="Sagara.Core.Logging.Serilog" Version="1.0.0" />
 		<PackageReference Include="Serilog" Version="3.0.1" />
 		<PackageReference Include="Serilog.Extensions.Hosting" Version="7.0.0" />
-		<PackageReference Include="Serilog.Settings.Configuration" Version="7.0.0" />
+		<PackageReference Include="Serilog.Settings.Configuration" Version="7.0.1" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
 	</ItemGroup>
-
-	<ItemGroup />
 </Project>

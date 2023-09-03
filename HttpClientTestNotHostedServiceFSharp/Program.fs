@@ -21,7 +21,9 @@ module Program =
                 // Set up the generic host and DI.
                 //
 
-                let host = HostBuilderHelper.buildHost argv
+                let builder = ConsoleHost.createApplicationBuilder argv
+                use host = builder.Build()
+
                 use serviceScope = host.Services.CreateScope()
                 let services = serviceScope.ServiceProvider
 
