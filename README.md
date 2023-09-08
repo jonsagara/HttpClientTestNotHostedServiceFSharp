@@ -2,19 +2,24 @@
 
 > If you're looking for the C# version, go [here](https://github.com/jonsagara/HttpClientTestNotHostedService).
 
-Not that there's anything wrong with `IHostedService`, but sometimes you just want a plain old console app without having to implement another interface just so 
-that you can inject and use `IHttpClientFactory`.
+Not that there's anything wrong with `IHostedService`, but sometimes you just want a plain old console app without 
+having to implement another interface just so that you can inject and use `IHttpClientFactory`.
 
-There is still some ceremony involved with setting up the Generic Host `HostBuilder` so that you can inject `IHttpClientFactory` into your classes, but beyond that you merely create an `IServiceScope` to make everything work:
+By using the new `HostApplicationBuilder` pattern (encapsulated in the `ConsoleHost` class), there is much less
+ceremony involved with setting up the Generic Host `HostBuilder` so that you can inject `IHttpClientFactory` 
+into your classes. Beyond that, you merely create an `IServiceScope` to make everything work:
 
 ```fsharp
 //
 // Set up the generic host and DI.
 //
 
-let host = HostBuilderHelper.buildHost argv
+let builder = ConsoleHost.createApplicationBuilder argv
+use host = builder.Build()
+
 use serviceScope = host.Services.CreateScope()
 let services = serviceScope.ServiceProvider
+
 
 //
 // Run the test service method.
