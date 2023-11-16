@@ -10,7 +10,7 @@ open Sagara.Core.Logging.Serilog
 
 module ConsoleHost =
 
-    let private configureSerilog (config : IConfiguration) (services : IServiceProvider) (loggerConfig : LoggerConfiguration) =
+    let private configureSerilog (builder : IHostApplicationBuilder) (services : IServiceProvider) (loggerConfig : LoggerConfiguration) =
         // This is the .exe path in bin/{configuration}/{tfm}/
         let currentExeDir = Directory.GetCurrentDirectory()
 
@@ -24,7 +24,7 @@ module ConsoleHost =
 
         // Always write to a rolling file.
         loggerConfig = loggerConfig
-            .ReadFrom.Configuration(config)
+            .ReadFrom.Configuration(builder.Configuration)
             .ReadFrom.Services(services)
             .Enrich.With<UtcTimestampEnricher>()
             .WriteTo.Console()
