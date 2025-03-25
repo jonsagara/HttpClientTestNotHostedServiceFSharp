@@ -26,7 +26,6 @@ module ConsoleHost =
         loggerConfig = loggerConfig
             .ReadFrom.Configuration(builder.Configuration)
             .ReadFrom.Services(services)
-            .Enrich.With<UtcTimestampEnricher>()
             .WriteTo.Console()
             .WriteTo.File(
                 path = logFilePathFormat,
